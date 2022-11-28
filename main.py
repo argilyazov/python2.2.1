@@ -354,7 +354,7 @@ rep = Report(profession, all_salary, all_count, prof_salary, prof_count, result_
 if len(head) == 0:
     print('Пустой файл')
 elif command == 'ексель':
-    rep.generate_excel('master.xlsx')
+    rep.generate_excel('develop.xlsx')
 elif command == 'ексель':
     rep.generate_image('graph.png')
 elif command == 'таблица':
