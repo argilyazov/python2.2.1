@@ -1,5 +1,6 @@
 *.csv
-*.xlsx
 *.png
+*.xlsx
+*.txt
 .idea/*
 venv/*

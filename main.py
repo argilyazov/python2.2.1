@@ -5,6 +5,7 @@ import openpyxl
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Protection, Font
 import matplotlib.pyplot as plt
 import numpy as np
+from prettytable import PrettyTable
 
 currency_to_rub = {
     "AZN": 35.68,
@@ -80,7 +81,7 @@ class Report():
         rects1 = axs[0, 1].bar(x - width / 2, all_vac, width, label='Количество вакансий')
         rects2 = axs[0, 1].bar(x + width / 2, prof_vac, width, label=f'Количество вакансий {profession}')
         axs[0, 1].set_title('Количесвто вакансий по годам')
-        axs[0, 1].set_xticks(x, years)
+        axs[0, 1].set_xticks(x, years, rotation='vertical')
         axs[0, 1].legend(loc='upper left')
         axs[0, 1].yaxis.grid(True)
         cities = [re.sub('-| ', '\n', x) for x in self.result_city_salary.keys()]
@@ -122,67 +123,64 @@ class Report():
         plt.show()
         fig.savefig(name)
 
+    def aligment(self, sheet):
+        def as_text(val):
+            if val is None:
+                return ""
+            return str(val)
 
-def aligment(self, sheet):
-    def as_text(val):
-        if val is None:
-            return ""
-        return str(val)
+        for column in sheet.columns:
+            length = max(len(as_text(cell.value)) for cell in column)
+            sheet.column_dimensions[column[0].column_letter].width = length + 2
 
-    for column in sheet.columns:
-        length = max(len(as_text(cell.value)) for cell in column)
-        sheet.column_dimensions[column[0].column_letter].width = length + 2
+    def stylization(self, sheet, part):
+        thin = Side(border_style="thin", color="000000")
+        for i in range(1, sheet.max_column + 1):
+            sheet.cell(row=1, column=i).font = Font(bold=True)
+            for j in range(1, sheet.max_row + 1):
+                sheet.cell(row=j, column=i).border = Border(top=thin, left=thin, right=thin, bottom=thin)
+        if part > 0:
+            for j in range(1, sheet.max_row + 1):
+                sheet.cell(row=j, column=part).border = Border(left=thin, right=thin)
 
+    def generate_excel(self, name):
+        wb = openpyxl.Workbook()
+        sheet = wb.active
+        sheet.title = 'Статистика по годам'
+        header = ['Год', 'Средняя зарплата', f'Средняя зарплата - {profession}', 'Количество вакансий',
+                  f'Количество вакансий - {profession}']
+        sheet.append(header)
+        years = list(all_salary.keys())
+        for i in range(len(years)):
+            row = []
+            row.append(years[i])
+            row.append(list(map(list, all_salary.items()))[i][1])
+            row.append(list(map(list, prof_salary.items()))[i][1])
+            row.append(list(map(list, all_count.items()))[i][1])
+            row.append(list(map(list, all_salary.items()))[i][1])
+            sheet.append(row)
+        self.aligment(sheet)
+        self.stylization(sheet, -1)
 
-def stylization(self, sheet, part):
-    thin = Side(border_style="thin", color="000000")
-    for i in range(1, sheet.max_column + 1):
-        sheet.cell(row=1, column=i).font = Font(bold=True)
-        for j in range(1, sheet.max_row + 1):
-            sheet.cell(row=j, column=i).border = Border(top=thin, left=thin, right=thin, bottom=thin)
-    if part > 0:
-        for j in range(1, sheet.max_row + 1):
-            sheet.cell(row=j, column=part).border = Border(left=thin, right=thin)
-
-
-def generate_excel(self, name):
-    wb = openpyxl.Workbook()
-    sheet = wb.active
-    sheet.title = 'Статистика по годам'
-    header = ['Год', 'Средняя зарплата', f'Средняя зарплата - {profession}', 'Количество вакансий',
-              f'Количество вакансий - {profession}']
-    sheet.append(header)
-    years = list(all_salary.keys())
-    for i in range(len(years)):
-        row = []
-        row.append(years[i])
-        row.append(list(map(list, all_salary.items()))[i][1])
-        row.append(list(map(list, prof_salary.items()))[i][1])
-        row.append(list(map(list, all_count.items()))[i][1])
-        row.append(list(map(list, all_salary.items()))[i][1])
-        sheet.append(row)
-    self.aligment(sheet)
-    self.stylization(sheet, -1)
-
-    wb.create_sheet('Статистика по городам', 1)
-    wb.active = 1
-    sheet = wb.active
-    header = ['Город', 'Уровень зарплат', '	', 'Город', 'Доля вакансий']
-    sheet.append(header)
-    cities = list(result_city_salary.keys())
-    for i in range(len(cities)):
-        row = []
-        row.append(cities[i])
-        row.append(list(map(list, result_city_salary.items()))[i][1])
-        row.append('')
-        row.append(cities[i])
-        row.append(list(map(list, result_city_count.items()))[i][1])
-        sheet.append(row)
-    for i in range(1, sheet.max_row + 1):
-        sheet.cell(row=i, column=5).number_format = '0.00%'
-    self.aligment(sheet)
-    self.stylization(sheet, 3)
-    wb.save(name)
+        wb.create_sheet('Статистика по городам', 1)
+        wb.active = 1
+        sheet = wb.active
+        header = ['Город', 'Уровень зарплат', '	', 'Город', 'Доля вакансий']
+        sheet.append(header)
+        cities = list(result_city_salary.keys())
+        for i in range(len(cities)):
+            row = []
+            row.append(cities[i])
+            row.append(list(map(list, result_city_salary.items()))[i][1])
+            row.append('')
+            row.append(cities[i])
+            row.append(list(map(list, result_city_count.items()))[i][1])
+            sheet.append(row)
+        for i in range(1, sheet.max_row + 1):
+            sheet.cell(row=i, column=5).number_format = '0.00%'
+        self.aligment(sheet)
+        self.stylization(sheet, 3)
+        wb.save(name)
 
 
 def clear_string(text):
@@ -299,11 +297,31 @@ def get_statistics(list_vacancies, prof, actual_city):
         prof_salary), get_average_salary_by_year(city_salary)
 
 
-file_name = 'vacancies_by_year.csv'  # input('Введите название файла: ')
-profession = 'аналитик'  # input('Введите название профессии: ')
+def fill_table(vac_data, table):
+    row = []
+    count = 0
+    for vacancy in vac_data:
+        count += 1
+        row.append(str(count))
+        for key in vacancy.keys():
+            row.append(vacancy[key])
+        table.add_row(row)
+        row = []
+    return table
 
+
+file_name = 'vacancies.csv'  # input('Введите название файла: ')
+profession = 'аналитик'  # input('Введите название профессии: ')
+command = input('таблица или ексель или график')
 lines, head = csv_reader(file_name)
 vacancies = csv_filer(lines, head)
+
+table = PrettyTable()
+table.align = "l"
+table.field_names = ['№'] + list(vacancies[0].keys())
+table.max_width = 20
+table.hrules = True
+
 list_vacancies = []
 city_count = {}
 for vacancy in vacancies:
@@ -311,7 +329,7 @@ for vacancy in vacancies:
     vacancy_obj = Vacancy(vacancy['name'], salary, vacancy['area_name'], vacancy['published_at'])
     city_count = up_count(vacancy_obj.area_name, city_count)
     list_vacancies.append(vacancy_obj)
-
+table = fill_table(vacancies, table)
 actual_city = []
 for city in city_count.keys():
     if city_count[city] / len(list_vacancies) >= 0.01:
@@ -332,9 +350,15 @@ for city in sorted_city_count[:10]:
     if city in actual_city:
         share = round(city_count[city] / len(list_vacancies), 4)
         result_city_count[city] = share
-
+rep = Report(profession, all_salary, all_count, prof_salary, prof_count, result_city_salary, result_city_count)
 if len(head) == 0:
     print('Пустой файл')
+elif command == 'ексель':
+    rep.generate_excel('report.xlsx')
+elif command == 'ексель':
+    rep.generate_image('graph.png')
+elif command == 'таблица':
+    print(table)
 else:
     print(f'Динамика уровня зарплат по годам: {all_salary}\n'
           f'Динамика количества вакансий по годам: {all_count}\n'
@@ -342,6 +366,4 @@ else:
           f'Динамика количества вакансий по годам для выбранной профессии: {prof_count}\n'
           f'Уровень зарплат по городам (в порядке убывания): {result_city_salary}\n'
           f'Доля вакансий по городам (в порядке убывания): {result_city_count}')
-    rep = Report(profession, all_salary, all_count, prof_salary, prof_count, result_city_salary, result_city_count)
-    # rep.generate_excel('report.xlsx')
-    rep.generate_image('graph.png')
+
