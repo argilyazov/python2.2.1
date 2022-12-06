@@ -6,6 +6,7 @@ from openpyxl.styles import PatternFill, Border, Side, Alignment, Protection, Fo
 import matplotlib.pyplot as plt
 import numpy as np
 from prettytable import PrettyTable
+import doctest
 
 currency_to_rub = {
     "AZN": 35.68,
@@ -22,21 +23,49 @@ currency_to_rub = {
 
 
 class Vacancy():
-    def __init__(self, name, salary, area_name,
-                 published_at, description='', key_skills='', experience_id='', premium='', employer_name=''):
+    """Класс для представления вакансии
+
+        Atributes:
+            name (str): Названиее вакансии
+            salary (Salary): Данные о зарплате вакансии
+            area_name (str): город места работы
+            published_at (str): дата публикации
+        """
+    def __init__(self, name, salary, area_name, published_at):
+        """Выполняет инициализацию объекта Vacancy
+
+        Args:
+            name (str): Названиее вакансии
+            salary (Salary): Данные о зарплате вакансии
+            area_name (str): город места работы
+            published_at (str): дата публикации
+        """
         self.name = name
-        self.description = description
-        self.key_skills = key_skills
-        self.experience_id = experience_id
-        self.premium = premium
-        self.employer_name = employer_name
         self.salary = salary
         self.area_name = area_name
         self.published_at = published_at
 
 
 class Salary():
+    """Класс для представления зарплаты
+
+    Atributes:
+        salary_from (str or int or float): Нижняя граница оклада
+        salary_to (str or int or float): Верхняя граница оклада
+        salary_currency (str): Валюта оклада
+        salary_gross (str): Брутто оклада
+        average_salary (float): Средний оклад
+    """
     def __init__(self, salary_from, salary_to, salary_currency, salary_gross=''):
+        """Выполняет инициализацию объекта Salary и конвертацию целочисленных полей
+
+        Args:
+            salary_from (str or int or float): Нижняя граница оклада
+            salary_to (str or int or float): Верхняя граница оклада
+            salary_currency (str): Валюта оклада
+            salary_gross (str): Брутто оклада
+            average_salary (float): Средний оклад
+        """
         self.salary_from = float(salary_from) * currency_to_rub[salary_currency]
         self.salary_to = float(salary_to) * currency_to_rub[salary_currency]
         self.salary_gross = salary_gross
@@ -45,8 +74,28 @@ class Salary():
 
 
 class Report():
+    """Класс для визуализации статистики
+
+        Atributes:
+            profession (str): название профессии для которой сформирована статистика
+            all_salary (dict): словарь зависимости годов от средних зарплат
+            all_count (dict): словарь зависимости годов от количества вакансий за этот год
+            prof_salary (dict): словарь зависимости годов от средних зарплат для выбранной профессии
+            prof_count (dict): словарь зависимости годов от количества вакансий за этот год для выбранной профессии
+            result_city_salary (dict): словарь зависимости городов от средних зарплат
+            result_city_count (dict): словарь зависимости городов от процентной доли зарплат
+    """
     def __init__(self, profession, all_salary, all_count, prof_salary, prof_count, result_city_salary,
                  result_city_count):
+        """Выполняет инициализацию объекта Report
+
+        Args:
+            profession (str): название профессии для которой сформирована статистика
+            all_salary (dict): словарь зависимости годов от средних зарплат
+            all_count (dict): словарь зависимости годов от количества вакансий за этот год
+            prof_salary (dict): словарь зависимости годов от средних зарплат для выбранной профессии                prof_count (dict): словарь зависимости годов от количества вакансий за этот год для выбранной профессии                    result_city_salary (dict): словарь зависимости городов от средних зарплат
+            result_city_count (dict): словарь зависимости городов от процентной доли зарплат
+        """
         self.profession = profession
         self.all_salary = all_salary
         self.all_count = all_count
@@ -56,6 +105,11 @@ class Report():
         self.result_city_count = result_city_count
 
     def generate_image(self, name):
+        """Формирует изображение с четырьмя графиками по данным статистики
+
+        Args:
+            name (str): имя файла, с которым будет сохранено изображение
+        """
         fig, axs = plt.subplots(nrows=2, ncols=2)
         font = {'size': 8}
 
@@ -124,7 +178,19 @@ class Report():
         fig.savefig(name)
 
     def aligment(self, sheet):
+        """Выравнивает ячейки таблицы по содержимому
+
+        Args:
+            sheet (): таблица для которой будет произведено выравнивание
+        """
         def as_text(val):
+            """Преобразует ячейку в строкое представление
+
+            Args:
+                val (): ячейка
+            Retuns:
+                str: ячейка в строковом представлении
+            """
             if val is None:
                 return ""
             return str(val)
@@ -134,6 +200,12 @@ class Report():
             sheet.column_dimensions[column[0].column_letter].width = length + 2
 
     def stylization(self, sheet, part):
+        """Выравнивает ячейки таблицы по содержимому
+
+        Args:
+            sheet (): таблица для которой будет произведено стилизация
+            part (int): идекс колонки для которой не будет границы сверху и снизу, если не нужно делать отступ, то передать -1
+        """
         thin = Side(border_style="thin", color="000000")
         for i in range(1, sheet.max_column + 1):
             sheet.cell(row=1, column=i).font = Font(bold=True)
@@ -144,6 +216,11 @@ class Report():
                 sheet.cell(row=j, column=part).border = Border(left=thin, right=thin)
 
     def generate_excel(self, name):
+        """Формирует exel таблицу по данным статистики
+
+        Args:
+            name (str): имя файла, с которым будет сохранена таблица
+        """
         wb = openpyxl.Workbook()
         sheet = wb.active
         sheet.title = 'Статистика по годам'
@@ -184,6 +261,13 @@ class Report():
 
 
 def clear_string(text):
+    """Очищает строку от html тегов и заменяет перенос строки на запятую
+
+    Args:
+        text (str): изменяемая строка
+    Returns:
+        str: очищенная строка
+    """
     output = re.sub(r"<.*?>", "", text)
     output = output.strip()
     if output.find("\n") != -1:
@@ -192,6 +276,14 @@ def clear_string(text):
 
 
 def csv_reader(file_name):
+    """Считывает csv файл
+
+    Args:
+        file_name (str): путь до файла
+    Returns:
+        str[]: данные таблицы
+        str[]: заголовки таблицы
+    """
     with open(file_name, encoding="utf-8-sig") as file:
         text = csv.reader(file)
         lines = []
@@ -205,6 +297,14 @@ def csv_reader(file_name):
 
 
 def csv_filer(reader, list_naming):
+    """Преобразует данные в коллекцию словарей с данными о вакансииях
+
+    Args:
+        reader (str[]): данные таблицы
+        list_naming (str[]): заголовки таблицы
+    Returns:
+        dict[]: коллекция словарей с данными о вакансиях
+    """
     vacancies = []
     lines = []
     for line in reader:
@@ -220,6 +320,14 @@ def csv_filer(reader, list_naming):
 
 
 def up_count(key, dict):
+    """Выполняет инкремент по заданному ключу
+
+    Args:
+        key (str): ключ словаря
+        dict (dict): изменяемый словарь
+    Returns:
+        dict: измененный словарь
+    """
     try:
         key = int(key)
     except:
@@ -232,6 +340,15 @@ def up_count(key, dict):
 
 
 def up_salary(key, dict, salary):
+    """Выполняет инкремент элемента по заданному ключу и увеличивает зарплату на заданное число
+
+    Args:
+        key (str): ключ словаря
+        dict (dict): изменяемый словарь
+        salary (int): прибавляемая зарплата
+    Returns:
+        dict: измененный словарь
+    """
     try:
         key = int(key)
     except:
@@ -244,6 +361,13 @@ def up_salary(key, dict, salary):
 
 
 def get_average_salary_by_year(dict):
+    """Возращает словарь годов по средним зарплатам
+
+    Args:
+        dict (dict): словарь годов по общей зарпалате и их количеству
+    Returns:
+        dict: словарь годов по средним зарплатам
+    """
     res = {}
     for key in dict.keys():
         try:
@@ -254,6 +378,14 @@ def get_average_salary_by_year(dict):
 
 
 def dict_init_salary(key, dict):
+    """Инициализирует словарь зарплат по заданному ключу
+
+    Args:
+        key (str): ключ словаря
+        dict (dict): инициализируемый словарь
+    Returns:
+        dict: инициализированный словарь
+    """
     try:
         key = int(key)
     except:
@@ -264,6 +396,14 @@ def dict_init_salary(key, dict):
 
 
 def dict_init_count(key, dict):
+    """Инициализирует словарь количеств по заданному ключу
+
+    Args:
+        key (str): ключ словаря
+        dict (dict): инициализируемый словарь
+    Returns:
+        dict: инициализированный словарь
+    """
     try:
         key = int(key)
     except:
@@ -274,6 +414,19 @@ def dict_init_count(key, dict):
 
 
 def get_statistics(list_vacancies, prof, actual_city):
+    """Формирует словари со статистикой
+
+    Args:
+        list_vacancies (dict[]): данные о вакансиях
+        prof (str): профессия по которой будет сформирована статистика
+        actual_city (): топ 10 городов по количеству вакансий
+    Returns:
+        dict: словарь годов по количеству
+        dict: словарь годов по количеству заданной профессии
+        dict: словарь годов по средней зарплате
+        dict: словарь годов по средней зарплате заданной профессии
+        dict: словарь городов по средней зарплате
+    """
     all_count = {}
     all_salary = {}
     prof_count = {}
@@ -298,6 +451,18 @@ def get_statistics(list_vacancies, prof, actual_city):
 
 
 def fill_table(vac_data, table):
+    """Заполняет таблицу вакансиями
+
+    Args:
+        vac_data (dict[]): данные о вакансиях
+        table (PrettyTable): заполняемая таблица
+    Returns:
+        PrettyTable: заполненная таблица
+    """
+    table.align = "l"
+    table.field_names = ['№'] + list(vacancies[0].keys())
+    table.max_width = 20
+    table.hrules = True
     row = []
     count = 0
     for vacancy in vac_data:
@@ -317,10 +482,6 @@ lines, head = csv_reader(file_name)
 vacancies = csv_filer(lines, head)
 
 table = PrettyTable()
-table.align = "l"
-table.field_names = ['№'] + list(vacancies[0].keys())
-table.max_width = 20
-table.hrules = True
 
 list_vacancies = []
 city_count = {}
@@ -366,4 +527,3 @@ else:
           f'Динамика количества вакансий по годам для выбранной профессии: {prof_count}\n'
           f'Уровень зарплат по городам (в порядке убывания): {result_city_salary}\n'
           f'Доля вакансий по городам (в порядке убывания): {result_city_count}')
-
