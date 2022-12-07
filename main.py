@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from prettytable import PrettyTable
 import doctest
+from unittest import TestCase
 
 currency_to_rub = {
     "AZN": 35.68,
@@ -22,6 +23,35 @@ currency_to_rub = {
 }
 
 
+class Tests(TestCase):
+    def test_clear_tag(self):
+        self.assertEqual(clear_string('<h>Head</h>'), 'Head')
+
+    def test_clear_n(self):
+        self.assertEqual(clear_string('Head \nres \napp'), 'Head res app')
+
+    def test_clear_many_spaces(self):
+        self.assertEqual(clear_string('<h>Head    res</h>'), 'Head res')
+
+    def test_clear_spaces_sides(self):
+        self.assertEqual(clear_string(' <h> Head res</h> '), 'Head res')
+
+    def test_dict_average(self):
+        self.assertEqual(get_average_salary_by_year({'2000': (1, 200), '2001': (2, 600), '2002': (10, 200)}),
+                         {'2000': 200, '2001': 300, '2002': 20})
+
+    def test_dict_average_division_zero(self):
+        self.assertEqual(get_average_salary_by_year({'2000': (0, 200), '2001': (0, 600), '2002': (0, 200)}),
+                         {'2000': 0, '2001': 0, '2002': 0})
+
+    def test_dict_init(self):
+        self.assertEqual(dict_init_salary('2003', {'2000': (0, 200), '2001': (0, 600), '2002': (0, 200)}),
+                         {'2000': (0, 200), '2001': (0, 600), '2002': (0, 200), '2003': (0, 0)})
+
+    def test_dict_init_repeat(self):
+        self.assertEqual(dict_init_salary('2000', {'2000': (0, 200), '2001': (0, 600), '2002': (0, 200)}),
+                         {'2000': (0, 200), '2001': (0, 600), '2002': (0, 200)})
+
 class Vacancy():
     """Класс для представления вакансии
 
@@ -31,6 +61,7 @@ class Vacancy():
             area_name (str): город места работы
             published_at (str): дата публикации
         """
+
     def __init__(self, name, salary, area_name, published_at):
         """Выполняет инициализацию объекта Vacancy
 
@@ -39,6 +70,15 @@ class Vacancy():
             salary (Salary): Данные о зарплате вакансии
             area_name (str): город места работы
             published_at (str): дата публикации
+
+        >>> Vacancy('Аналитик',Salary(10000,20000,'RUR'),'Алапаевск','28-08-2003').name
+        'Аналитик'
+        >>> type(Vacancy('Аналитик',Salary(10000,20000,'RUR'),'Алапаевск','28-08-2003').salary).__name__
+        'Salary'
+        >>> Vacancy('Аналитик',Salary(10000,20000,'RUR'),'Алапаевск','28-08-2003').area_name
+        'Алапаевск'
+        >>> Vacancy('Аналитик',Salary(10000,20000,'RUR'),'Алапаевск','28-08-2003').published_at
+        '28-08-2003'
         """
         self.name = name
         self.salary = salary
@@ -56,6 +96,7 @@ class Salary():
         salary_gross (str): Брутто оклада
         average_salary (float): Средний оклад
     """
+
     def __init__(self, salary_from, salary_to, salary_currency, salary_gross=''):
         """Выполняет инициализацию объекта Salary и конвертацию целочисленных полей
 
@@ -65,6 +106,15 @@ class Salary():
             salary_currency (str): Валюта оклада
             salary_gross (str): Брутто оклада
             average_salary (float): Средний оклад
+
+        >>> Salary(10000,20000,'RUR').average_salary
+        15000.0
+        >>> Salary(10000,20000,'EUR').salary_from
+        599000.0
+        >>> Salary(10000,20000,'EUR').salary_to
+        1198000.0
+        >>> Salary(10000,20000,'RUR').salary_currency
+        'RUR'
         """
         self.salary_from = float(salary_from) * currency_to_rub[salary_currency]
         self.salary_to = float(salary_to) * currency_to_rub[salary_currency]
@@ -85,6 +135,7 @@ class Report():
             result_city_salary (dict): словарь зависимости городов от средних зарплат
             result_city_count (dict): словарь зависимости городов от процентной доли зарплат
     """
+
     def __init__(self, profession, all_salary, all_count, prof_salary, prof_count, result_city_salary,
                  result_city_count):
         """Выполняет инициализацию объекта Report
@@ -183,6 +234,7 @@ class Report():
         Args:
             sheet (): таблица для которой будет произведено выравнивание
         """
+
         def as_text(val):
             """Преобразует ячейку в строкое представление
 
@@ -527,3 +579,5 @@ else:
           f'Динамика количества вакансий по годам для выбранной профессии: {prof_count}\n'
           f'Уровень зарплат по городам (в порядке убывания): {result_city_salary}\n'
           f'Доля вакансий по городам (в порядке убывания): {result_city_count}')
+
+doctest.testmod()
